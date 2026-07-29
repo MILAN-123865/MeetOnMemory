@@ -50,6 +50,12 @@ const notificationSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+notificationSchema.index({
+  user: 1,
+  isRead: 1,
+  createdAt: -1,
+});
+
 const notificationModel =
   mongoose.models.notification ||
   mongoose.model("notification", notificationSchema);
