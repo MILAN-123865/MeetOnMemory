@@ -31,6 +31,8 @@ import {
   archiveMeeting,
   restoreMeeting,
   notifyLiveMeeting, // NEW: Notify participants of a live meeting
+  handleMeetingClipOperation,
+  getMeetingClip,
   getMeetingInvite,
   regenerateMeetingInvite,
   updateMeetingInvite,
@@ -388,6 +390,26 @@ router.post(
   writeLimiter,
   requirePermission("meetings", "create"),
   notifyLiveMeeting,
+);
+
+// ✅ Create/Modify Meeting Clip
+router.post(
+  "/:id/clip",
+  userAuth,
+  requireOrgMembership,
+  requireOrgAccess(Meeting),
+  requirePermission("meetings", "edit"),
+  handleMeetingClipOperation,
+);
+
+// ✅ View Meeting Clip
+router.get(
+  "/:id/clip/:clipId",
+  userAuth,
+  requireOrgMembership,
+  requireOrgAccess(Meeting),
+  requirePermission("meetings", "view"),
+  getMeetingClip,
 );
 
 // ✅ Resend Meeting Digest

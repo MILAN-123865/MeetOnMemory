@@ -44,4 +44,8 @@ if (typeof globalThis.IntersectionObserver === "undefined") {
   };
 }
 
+chore/remove-dead-shared-link-controller-1142
 vi.stubEnv('VITE_CLERK_PUBLISHABLE_KEY', 'pk_test_bW9jay1jbGVyay1rZXk');
+
+vi.stubEnv("VITE_CLERK_PUBLISHABLE_KEY", "pk_test_bW9jay1jbGVyay1rZXk");
+ main

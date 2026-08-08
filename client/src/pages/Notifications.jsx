@@ -4,6 +4,7 @@ import AppContent from "../context/AppContent";
 import { toast } from "react-toastify";
 import Navbar from "../components/Navbar.jsx";
 import { notificationApi } from "../services";
+import { validateRedirect } from "../utils/validateRedirect.js";
 import {
   Bell,
   Check,
@@ -244,7 +245,12 @@ const Notifications = () => {
       handleMarkAsRead(notification._id);
     }
     if (notification.actionUrl) {
-      navigate(notification.actionUrl);
+      const safeUrl = validateRedirect(notification.actionUrl, null);
+      if (safeUrl) {
+        navigate(safeUrl);
+      } else {
+        toast.error("Invalid or unsafe link");
+      }
     }
   };
 
@@ -258,7 +264,7 @@ const Notifications = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/20">
       <Navbar />
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -573,7 +579,7 @@ const Notifications = () => {
             </div>
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 };
