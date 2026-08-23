@@ -11,6 +11,8 @@ import {
 } from "../../services/followUpThreadApi";
 import { toast } from "react-toastify";
 import { createClerkSocketOptions } from "../../services/apiClient.js";
+import MentionTextArea from "../MentionTextArea";
+import MentionTextRenderer from "../MentionTextRenderer";
 
 const FollowUpThreads = ({ meetingId }) => {
   const { userData, backendUrl } = useContext(AppContent) || {};
@@ -208,31 +210,36 @@ const FollowUpThreads = ({ meetingId }) => {
 
       {/* Thread Creation Form */}
       <form onSubmit={handleCreateThread} className="mb-6 space-y-3">
-        <div className="flex gap-2">
+        <div className="flex gap-3 items-center">
+          <span className="text-xs font-semibold text-gray-550 dark:text-gray-400">
+            Anchor Type:
+          </span>
           <select
             value={newThreadType}
             onChange={(e) => setNewThreadType(e.target.value)}
-            className="p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            className="p-1.5 text-xs border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
           >
             <option value="general">General</option>
             <option value="decision">Decision</option>
             <option value="action_item">Action Item</option>
             <option value="agenda_item">Agenda Item</option>
           </select>
-          <input
-            type="text"
+        </div>
+        <div className="flex flex-col gap-2">
+          <MentionTextArea
             value={newThreadContent}
-            onChange={(e) => setNewThreadContent(e.target.value)}
+            onChange={setNewThreadContent}
             placeholder="Start a new thread..."
-            className="flex-1 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500"
           />
-          <button
-            type="submit"
-            disabled={!newThreadContent.trim()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-          >
-            Start Thread
-          </button>
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={!newThreadContent.trim()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 text-xs font-semibold"
+            >
+              Start Thread
+            </button>
+          </div>
         </div>
       </form>
 
@@ -324,11 +331,10 @@ const FollowUpThreads = ({ meetingId }) => {
                           onSubmit={(e) => handleEditReply(e, reply._id)}
                           className="mt-2"
                         >
-                          <textarea
+                          <MentionTextArea
                             value={editContent}
-                            onChange={(e) => setEditContent(e.target.value)}
-                            className="w-full p-2 border rounded text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white"
-                            rows="2"
+                            onChange={setEditContent}
+                            placeholder="Edit your reply..."
                           />
                           <div className="flex justify-end gap-2 mt-2">
                             <button
@@ -347,9 +353,9 @@ const FollowUpThreads = ({ meetingId }) => {
                           </div>
                         </form>
                       ) : (
-                        <p className="text-sm dark:text-gray-200 whitespace-pre-wrap">
-                          {reply.content}
-                        </p>
+                        <div className="text-sm dark:text-gray-200 whitespace-pre-wrap">
+                          <MentionTextRenderer rawContent={reply.content} />
+                        </div>
                       )}
 
                       {userData &&
@@ -387,27 +393,27 @@ const FollowUpThreads = ({ meetingId }) => {
             {thread.status !== "resolved" && (
               <form
                 onSubmit={(e) => handleReply(e, thread._id)}
-                className="mt-4 flex gap-2 ml-11"
+                className="mt-4 flex flex-col gap-2 ml-11"
               >
-                <input
-                  type="text"
+                <MentionTextArea
                   value={replyContents[thread._id] || ""}
-                  onChange={(e) =>
+                  onChange={(val) =>
                     setReplyContents({
                       ...replyContents,
-                      [thread._id]: e.target.value,
+                      [thread._id]: val,
                     })
                   }
                   placeholder="Reply to thread..."
-                  className="flex-1 p-2 border text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-1 focus:ring-blue-500"
                 />
-                <button
-                  type="submit"
-                  disabled={!replyContents[thread._id]?.trim()}
-                  className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-50"
-                >
-                  Reply
-                </button>
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={!(replyContents[thread._id] || "").trim()}
+                    className="px-3 py-1 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-700 disabled:opacity-50 font-semibold"
+                  >
+                    Reply
+                  </button>
+                </div>
               </form>
             )}
           </div>

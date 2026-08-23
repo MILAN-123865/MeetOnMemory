@@ -17,6 +17,17 @@ async function filterOrgMembers(mentions, organizationId) {
   return members.map((m) => m._id);
 }
 
+function extractMentionedIds(content) {
+  if (!content) return [];
+  const mentionRegex = /@\[[a-zA-Z0-9__]+\]\(id:([a-zA-Z0-9_-]+)\)/g;
+  const ids = [];
+  let match;
+  while ((match = mentionRegex.exec(content)) !== null) {
+    ids.push(match[1]);
+  }
+  return ids;
+}
+
 // Resolve a thread to its meeting and confirm the caller shares its org.
 // Returns { thread, meeting } on success or { error: { status, message } }.
 async function resolveThreadOrgAccess(threadId, user) {
@@ -55,9 +66,14 @@ export const createThread = async (req, res) => {
       createdBy,
     });
 
+    const parsedMentions = extractMentionedIds(content);
+    const combinedMentions = [
+      ...new Set([...(mentions || []), ...parsedMentions]),
+    ];
+
     // Only notify mentioned users who are members of the caller's org.
     const validMentions = await filterOrgMembers(
-      mentions,
+      combinedMentions,
       req.user.organization,
     );
 
@@ -144,9 +160,14 @@ export const createReply = async (req, res) => {
     // Derive the meeting from the thread instead of trusting req.body.meetingId.
     const meetingId = access.thread.meetingId.toString();
 
+    const parsedMentions = extractMentionedIds(content);
+    const combinedMentions = [
+      ...new Set([...(mentions || []), ...parsedMentions]),
+    ];
+
     // Only notify mentioned users who are members of the caller's org.
     const validMentions = await filterOrgMembers(
-      mentions,
+      combinedMentions,
       req.user.organization,
     );
 
@@ -217,9 +238,31 @@ export const updateReply = async (req, res) => {
       });
     }
 
+    const parsedMentions = extractMentionedIds(content);
+    const validMentions = await filterOrgMembers(
+      parsedMentions,
+      req.user.organization,
+    );
+
     reply.content = content;
+    reply.mentions = validMentions;
     reply.edited = true;
     await reply.save();
+
+    // Notifications for mentions in updated reply
+    if (validMentions.length > 0) {
+      const thread = await followUpThreadModel.findById(reply.threadId);
+      const meetingId = thread.meetingId.toString();
+      const notifications = validMentions.map((userId) => ({
+        user: userId,
+        title: "You were mentioned in a reply",
+        description: `${req.user.name || "Someone"} mentioned you in a follow-up thread reply.`,
+        category: "meetings",
+        actionUrl: `/meeting/${meetingId}?threadId=${thread._id}`,
+        actionLabel: "View Reply",
+      }));
+      await notificationModel.insertMany(notifications);
+    }
 
     const populatedReply = await threadReplyModel
       .findById(reply._id)

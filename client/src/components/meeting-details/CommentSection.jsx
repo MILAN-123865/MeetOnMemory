@@ -10,6 +10,8 @@ import {
 } from "../../api/commentApi";
 import { createClerkSocketOptions } from "../../services/apiClient.js";
 import { toast } from "react-toastify";
+import MentionTextArea from "../MentionTextArea";
+import MentionTextRenderer from "../MentionTextRenderer";
 
 const CommentSection = ({ meetingId }) => {
   const { userData, backendUrl } = useContext(AppContent);
@@ -185,11 +187,10 @@ const CommentSection = ({ meetingId }) => {
       >
         {isEditing ? (
           <div className="space-y-2">
-            <textarea
+            <MentionTextArea
               value={editText}
-              onChange={(e) => setEditText(e.target.value)}
-              className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              rows={3}
+              onChange={setEditText}
+              placeholder="Edit your comment..."
             />
             <div className="flex gap-2">
               <button
@@ -247,9 +248,9 @@ const CommentSection = ({ meetingId }) => {
               )}
             </div>
 
-            <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap">
-              {comment.body}
-            </p>
+            <div className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap">
+              <MentionTextRenderer rawContent={comment.body} />
+            </div>
 
             <div className="flex items-center gap-2 mt-2">
               <button
@@ -280,12 +281,10 @@ const CommentSection = ({ meetingId }) => {
 
             {replyingTo === comment._id && (
               <div className="mt-2 space-y-2">
-                <textarea
+                <MentionTextArea
                   value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
+                  onChange={setReplyText}
                   placeholder="Write a reply..."
-                  className="w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  rows={2}
                 />
                 <div className="flex gap-2">
                   <button
@@ -325,12 +324,10 @@ const CommentSection = ({ meetingId }) => {
       </h3>
 
       <form onSubmit={handleCreateComment} className="mb-6">
-        <textarea
+        <MentionTextArea
           value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
+          onChange={setNewComment}
           placeholder="Add a comment..."
-          className="w-full p-3 border rounded-lg dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-          rows={3}
         />
         <div className="flex justify-end mt-2">
           <button

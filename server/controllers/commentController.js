@@ -4,12 +4,61 @@ import Notification from "../models/notificationModel.js";
 import { hasPermission } from "../utils/rbacPermissions.js";
 import mongoose from "mongoose";
 import { buildPaginationMeta, parsePagination } from "../utils/pagination.js";
+import { createNotification } from "../services/notificationService.js";
 
 /**
  * Ceiling on replies loaded alongside one page of top-level comments
  * (Issue #1071).
  */
 const MAX_REPLIES_PER_PAGE = 500;
+
+const notifyMentionedUsers = async (
+  text,
+  author,
+  meetingId,
+  meetingTitle,
+  commentOrReplyId,
+  isReply,
+  io,
+) => {
+  const mentionRegex = /@\[[a-zA-Z0-9__]+\]\(id:([a-zA-Z0-9_-]+)\)/g;
+  const mentionedIds = [];
+  let match;
+  while ((match = mentionRegex.exec(text)) !== null) {
+    const userId = match[1];
+    if (userId !== author._id?.toString() && userId !== author.id?.toString()) {
+      mentionedIds.push(userId);
+    }
+  }
+
+  const uniqueMentionedIds = [...new Set(mentionedIds)];
+
+  for (const userId of uniqueMentionedIds) {
+    try {
+      const title = `${author.name || "Someone"} mentioned you`;
+      const description = `You were mentioned in a ${isReply ? "reply" : "comment"} on meeting "${meetingTitle}"`;
+      const notification = await createNotification(
+        userId,
+        title,
+        description,
+        "meetings",
+        `/meetings/${meetingId}#comment-${commentOrReplyId}`,
+        "View Mention",
+        {
+          meetingId,
+          commentId: commentOrReplyId,
+          mentionedBy: author.id || author._id,
+        },
+      );
+
+      if (notification && io) {
+        io.to(userId).emit("notification:new", notification);
+      }
+    } catch (err) {
+      console.error(`Failed to notify user ${userId} of mention:`, err);
+    }
+  }
+};
 
 /**
  * Create a notification for the meeting owner when a new comment is added
@@ -204,6 +253,17 @@ export const createComment = async (req, res) => {
     // Create notification for meeting owner
     await createCommentNotification(savedComment, meeting, req.user);
 
+    // Create notifications for mentioned users
+    await notifyMentionedUsers(
+      savedComment.body,
+      req.user,
+      meeting._id,
+      meeting.title,
+      savedComment._id,
+      !!savedComment.parentComment,
+      io,
+    );
+
     res.status(201).json(savedCommentObj);
   } catch (error) {
     console.error("Error creating comment:", error);
@@ -344,7 +404,7 @@ export const updateComment = async (req, res) => {
     }
 
     // Fetch comment and validate it exists
-    const comment = await Comment.findById(String(id));
+    const comment = await Comment.findById(String(id)).populate("meeting");
     if (!comment) {
       return res.status(404).json({ message: "Comment not found" });
     }
@@ -373,9 +433,20 @@ export const updateComment = async (req, res) => {
     // Emit Socket.IO event for real-time updates
     const io = req.app.get("io");
     if (io) {
-      io.to(comment.meeting.toString()).emit(
+      io.to(comment.meeting._id.toString()).emit(
         "comment:update",
         updatedCommentObj,
+      );
+
+      // Notify mentioned users
+      await notifyMentionedUsers(
+        updatedComment.body,
+        req.user,
+        comment.meeting._id,
+        comment.meeting.title,
+        updatedComment._id,
+        !!updatedComment.parentComment,
+        io,
       );
     }
 
