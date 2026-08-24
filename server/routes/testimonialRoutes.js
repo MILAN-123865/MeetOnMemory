@@ -12,6 +12,9 @@ import {
   listAdminTestimonials,
   updateTestimonialStatus,
   adminDeleteTestimonial,
+  bulkUpdateTestimonialsStatus,
+  updateTestimonialSpotlight,
+  getHomepageSpotlightTestimonials,
 } from "../controllers/testimonialController.js";
 
 const router = express.Router();
@@ -19,6 +22,7 @@ const router = express.Router();
 // Public
 router.get("/", listApprovedTestimonials);
 router.get("/stats", getTestimonialStats);
+router.get("/spotlight", getHomepageSpotlightTestimonials);
 
 // Authenticated user
 router.get("/me", userAuth, getMyTestimonial);
@@ -32,5 +36,7 @@ export const adminTestimonialRouter = express.Router();
 
 adminTestimonialRouter.use(userAuth, requireAdminOrOwner);
 adminTestimonialRouter.get("/", listAdminTestimonials);
+adminTestimonialRouter.post("/bulk-status", bulkUpdateTestimonialsStatus);
 adminTestimonialRouter.patch("/:id/status", updateTestimonialStatus);
+adminTestimonialRouter.put("/:id/spotlight", updateTestimonialSpotlight);
 adminTestimonialRouter.delete("/:id", adminDeleteTestimonial);

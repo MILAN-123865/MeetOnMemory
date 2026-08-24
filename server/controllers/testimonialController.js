@@ -468,3 +468,125 @@ export const adminDeleteTestimonial = async (req, res) => {
     });
   }
 };
+
+/**
+ * POST /api/admin/testimonials/bulk-status
+ * Bulk updates testimonial statuses (Approve / Reject / Delete)
+ */
+export const bulkUpdateTestimonialsStatus = async (req, res) => {
+  const { ids, status } = req.body;
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid or empty ID matrix list." });
+  }
+
+  const validStatuses = ["approved", "rejected", "pending"];
+  if (!validStatuses.includes(status?.toLowerCase()) && status !== "DELETE") {
+    return res
+      .status(400)
+      .json({ success: false, message: "Unsupported status action value." });
+  }
+
+  try {
+    if (status === "DELETE") {
+      await Testimonial.deleteMany({ _id: { $in: ids } });
+      return res
+        .status(200)
+        .json({
+          success: true,
+          message: `Successfully cleared ${ids.length} entries.`,
+        });
+    }
+
+    const result = await Testimonial.updateMany(
+      { _id: { $in: ids } },
+      {
+        $set: {
+          status: status.toLowerCase(),
+          moderatedAt: new Date(),
+          moderatedBy: req.user._id || req.user.id,
+        },
+      },
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully set status to ${status} across ${result.modifiedCount} records.`,
+    });
+  } catch (error) {
+    console.error("[TESTIMONIALS_BULK_STATUS_ERR]:", error);
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Internal data pipeline execution error.",
+      });
+  }
+};
+
+/**
+ * PUT /api/admin/testimonials/:id/spotlight
+ * Updates a testimonial's homepage spotlight status and order position
+ */
+export const updateTestimonialSpotlight = async (req, res) => {
+  const { id } = req.params;
+  const { isFeatured, displayOrder } = req.body;
+
+  try {
+    const testimonial = await Testimonial.findById(id);
+    if (!testimonial) {
+      return res
+        .status(404)
+        .json({
+          success: false,
+          message: "Target testimonial asset not found.",
+        });
+    }
+
+    testimonial.isFeatured = Boolean(isFeatured);
+    testimonial.displayOrder =
+      typeof displayOrder === "number" ? displayOrder : 0;
+    await testimonial.save();
+
+    return res
+      .status(200)
+      .json({ success: true, data: toAdminTestimonial(testimonial) });
+  } catch (error) {
+    console.error("[TESTIMONIALS_SPOTLIGHT_ERR]:", error);
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to balance spotlight metrics configuration.",
+      });
+  }
+};
+
+/**
+ * GET /api/testimonials/spotlight
+ * Public view query fetching curated spotlight sets ordered cleanly
+ */
+export const getHomepageSpotlightTestimonials = async (req, res) => {
+  try {
+    const spotlights = await populatePublic(
+      Testimonial.find({
+        status: "approved",
+        isFeatured: true,
+      }).sort({ displayOrder: 1, createdAt: -1 }),
+    ).lean();
+
+    return res
+      .status(200)
+      .json({ success: true, data: spotlights.map(toPublicTestimonial) });
+  } catch (error) {
+    console.error("[PUBLIC_SPOTLIGHT_FETCH_ERR]:", error);
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to harvest landing testimonials.",
+      });
+  }
+};
