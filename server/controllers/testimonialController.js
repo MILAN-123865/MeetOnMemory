@@ -492,12 +492,10 @@ export const bulkUpdateTestimonialsStatus = async (req, res) => {
   try {
     if (status === "DELETE") {
       await Testimonial.deleteMany({ _id: { $in: ids } });
-      return res
-        .status(200)
-        .json({
-          success: true,
-          message: `Successfully cleared ${ids.length} entries.`,
-        });
+      return res.status(200).json({
+        success: true,
+        message: `Successfully cleared ${ids.length} entries.`,
+      });
     }
 
     const result = await Testimonial.updateMany(
@@ -517,12 +515,10 @@ export const bulkUpdateTestimonialsStatus = async (req, res) => {
     });
   } catch (error) {
     console.error("[TESTIMONIALS_BULK_STATUS_ERR]:", error);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Internal data pipeline execution error.",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Internal data pipeline execution error.",
+    });
   }
 };
 
@@ -537,12 +533,10 @@ export const updateTestimonialSpotlight = async (req, res) => {
   try {
     const testimonial = await Testimonial.findById(id);
     if (!testimonial) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "Target testimonial asset not found.",
-        });
+      return res.status(404).json({
+        success: false,
+        message: "Target testimonial asset not found.",
+      });
     }
 
     testimonial.isFeatured = Boolean(isFeatured);
@@ -555,12 +549,10 @@ export const updateTestimonialSpotlight = async (req, res) => {
       .json({ success: true, data: toAdminTestimonial(testimonial) });
   } catch (error) {
     console.error("[TESTIMONIALS_SPOTLIGHT_ERR]:", error);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Failed to balance spotlight metrics configuration.",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Failed to balance spotlight metrics configuration.",
+    });
   }
 };
 
@@ -582,11 +574,9 @@ export const getHomepageSpotlightTestimonials = async (req, res) => {
       .json({ success: true, data: spotlights.map(toPublicTestimonial) });
   } catch (error) {
     console.error("[PUBLIC_SPOTLIGHT_FETCH_ERR]:", error);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Failed to harvest landing testimonials.",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Failed to harvest landing testimonials.",
+    });
   }
 };
