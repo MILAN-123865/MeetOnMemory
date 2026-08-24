@@ -1,6 +1,7 @@
 import express from "express";
 import userAuth from "../middleware/userAuth.js";
 import { tenantIsolation } from "../middleware/tenantIsolation.js";
+import tenantIsolation from "../middleware/tenantIsolation.js";
 import { requirePermission } from "../middleware/rbac.js";
 import {
   getCompletionMetrics,

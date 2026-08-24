@@ -54,10 +54,12 @@ import MembersManagement from "../pages/Admin/MembersManagement.jsx";
 import AuditLogViewer from "../pages/Admin/AuditLogViewer.jsx";
 import AdminHealth from "../pages/Admin/AdminHealth.jsx";
 import AdminPanel from "../pages/AdminPanel.jsx";
+import ResourceManagement from "../pages/Admin/ResourceManagement.jsx";
 import Bookmarks from "../pages/Bookmarks.jsx";
 import ActivityFeed from "../pages/ActivityFeed.jsx";
 import TagBrowser from "../pages/TagBrowser.jsx";
 import AttendanceAnalytics from "../pages/AttendanceAnalytics.jsx";
+import RsvpInbox from "../pages/RsvpInbox.jsx";
 import MeetingCostAnalytics from "../pages/MeetingCostAnalytics.jsx";
 import RecapScheduleDashboard from "../pages/RecapScheduleDashboard.jsx";
 import MeetingHealthDashboard from "../pages/MeetingHealthDashboard.jsx";
@@ -85,9 +87,18 @@ import StandupReports from "../pages/StandupReports.jsx";
 import SlaCompliance from "../pages/SlaCompliance.jsx";
 import TeamAvailability from "../pages/TeamAvailability.jsx";
 import ActionItemTemplates from "../pages/ActionItemTemplates.jsx";
+import IntegrationMarketplaceHub from "../pages/IntegrationMarketplaceHub.jsx";
 
 const ProtectedRoutes = (
   <React.Fragment>
+    <Route
+      path="/integrations/marketplace"
+      element={
+        <ProtectedRoute resource="organizations" action="view">
+          <IntegrationMarketplaceHub />
+        </ProtectedRoute>
+      }
+    />
     <Route
       path="/meetings"
       element={
@@ -233,6 +244,18 @@ const ProtectedRoutes = (
           forbiddenFallback={<AccessDenied />}
         >
           <AdminHealth />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/resources"
+      element={
+        <ProtectedRoute
+          resource="admin_panel"
+          action="view"
+          forbiddenFallback={<AccessDenied />}
+        >
+          <ResourceManagement />
         </ProtectedRoute>
       }
     />
@@ -756,6 +779,14 @@ const ProtectedRoutes = (
       }
     />
 
+    <Route
+      path="/rsvps"
+      element={
+        <ProtectedRoute>
+          <RsvpInbox />
+        </ProtectedRoute>
+      }
+    />
     <Route
       path="/admin-panel"
       element={

@@ -52,6 +52,50 @@ vi.mock("../../components/meeting-details/FeedbackForm.jsx", () => ({
   ),
 }));
 
+vi.mock("../../components/meeting-details/AgendaTimer.jsx", () => ({
+  default: ({ meeting, readOnly }) => (
+    <div
+      data-testid="agenda-timer"
+      data-meeting-id={meeting?._id}
+      data-readonly={readOnly ? "yes" : "no"}
+    >
+      Agenda for {meeting?._id}
+    </div>
+  ),
+}));
+
+vi.mock("../../components/meeting-details/HealthScoreCard.jsx", () => ({
+  default: ({ meetingId, organizationId }) => (
+    <div
+      data-testid="meeting-health-score-card"
+      data-meeting-id={meetingId}
+      data-organization-id={organizationId || ""}
+    >
+      Health for {meetingId}
+    </div>
+  ),
+}));
+
+vi.mock("../../components/meeting-details/AgendaPacingReport.jsx", () => ({
+  default: ({ meetingId }) => (
+    <div data-testid="agenda-pacing-report" data-meeting-id={meetingId}>
+      Pacing for {meetingId}
+    </div>
+  ),
+}));
+
+vi.mock("../../components/meeting-details/ClipManager.jsx", () => ({
+  default: ({ meetingId, canManage }) => (
+    <div
+      data-testid="clip-manager"
+      data-meeting-id={meetingId}
+      data-can-manage={canManage ? "yes" : "no"}
+    >
+      Clips for {meetingId}
+    </div>
+  ),
+}));
+
 vi.mock("../../services", () => ({
   meetingApi: {
     getMeetingById: vi.fn(),
